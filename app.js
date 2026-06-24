@@ -568,7 +568,20 @@ function initUI() {
     document.getElementById("btn-join").addEventListener("click", handleJoinGame);
     document.getElementById("btn-claim-card").addEventListener("click", handleClaimCard);
     document.getElementById("btn-toggle-config").addEventListener("click", () => {
-        document.getElementById("modal-fb-config").classList.add("active");
+        document.getElementById("fb-auth-password").value = "";
+        document.getElementById("modal-fb-auth").classList.add("active");
+    });
+    document.getElementById("btn-fb-auth-login").addEventListener("click", () => {
+        const pw = document.getElementById("fb-auth-password").value;
+        if (pw === "2525") {
+            document.getElementById("modal-fb-auth").classList.remove("active");
+            document.getElementById("modal-fb-config").classList.add("active");
+        } else {
+            alert("비밀번호가 일치하지 않습니다.");
+        }
+    });
+    document.getElementById("btn-fb-auth-close").addEventListener("click", () => {
+        document.getElementById("modal-fb-auth").classList.remove("active");
     });
     document.getElementById("btn-close-config").addEventListener("click", () => {
         document.getElementById("modal-fb-config").classList.remove("active");
@@ -1351,6 +1364,7 @@ function listenToGameState() {
     });
 }
 
+let isAdminDrawing = false;
 function listenToAdminState() {
     if (!db || !isHost) return;
 
@@ -1359,6 +1373,14 @@ function listenToAdminState() {
         const data = doc.data();
         currentGameStatus = data.status;
         drawnCardsCount = data.drawnCount || 0;
+        
+        if (currentGameStatus === "ready_to_draw" && !isAdminDrawing) {
+            isAdminDrawing = true;
+            setTimeout(() => {
+                adminDrawNextCard();
+                isAdminDrawing = false;
+            }, 1000);
+        }
         
         if (data.cardId) {
             activeCard = {
@@ -1388,12 +1410,6 @@ function listenToAdminState() {
 // ============================================================================
 
 function handleSaveFirebaseConfig() {
-    const adminPw = document.getElementById("config-admin-password").value;
-    if (adminPw !== "2525") {
-        alert("관리자 비밀번호가 일치하지 않습니다.");
-        return;
-    }
-
     const config = {
         apiKey: document.getElementById("config-apiKey").value.trim(),
         authDomain: document.getElementById("config-authDomain").value.trim(),

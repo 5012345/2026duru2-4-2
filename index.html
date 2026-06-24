@@ -68,10 +68,6 @@
                     <label>appId</label>
                     <input type="text" id="config-appId" placeholder="1:12345:web:abcd">
                 </div>
-                <div class="form-group">
-                    <label>관리자 비밀번호 확인 (2525)</label>
-                    <input type="password" id="config-admin-password" placeholder="••••">
-                </div>
                 <div class="modal-actions">
                     <button id="btn-save-config" class="btn btn-lime">설정 저장</button>
                     <button id="btn-close-config" class="btn btn-gray">닫기</button>
@@ -84,7 +80,7 @@
             <div class="modal-content">
                 <h2>관리자 인증</h2>
                 <div class="form-group">
-                    <label>비밀번호 (기본: 2525)</label>
+                    <label>비밀번호</label>
                     <input type="password" id="admin-password" placeholder="••••">
                 </div>
                 <div class="modal-actions">
@@ -253,6 +249,21 @@
                 </section>
             </main>
         </section>
+
+        <!-- Firebase 설정 진입 비밀번호 인증 모달 -->
+        <div id="modal-fb-auth" class="modal">
+            <div class="modal-content">
+                <h2>인증</h2>
+                <div class="form-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="fb-auth-password" placeholder="••••">
+                </div>
+                <div class="modal-actions">
+                    <button id="btn-fb-auth-login" class="btn btn-pink">확인</button>
+                    <button id="btn-fb-auth-close" class="btn btn-gray">취소</button>
+                </div>
+            </div>
+        </div>
 
         <!-- 4. 게임 결과 모달 -->
         <div id="modal-game-result" class="modal">
