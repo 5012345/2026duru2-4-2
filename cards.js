@@ -154,10 +154,6 @@ class CartoonGraphRenderer {
         svg += `</svg>`;
         this.container.innerHTML = svg;
     }
-
-        svg += `</svg>`;
-        this.container.innerHTML = svg;
-    }
 }
 
 function generateDynamicDeck(playerCount) {
