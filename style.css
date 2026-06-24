@@ -420,8 +420,6 @@ input[type="password"]:focus {
  * ------------------------------------------------------------- */
 #view-admin {
     background-color: var(--bg-darker);
-    display: none;
-    flex-direction: column;
     gap: 20px;
 }
 
@@ -626,8 +624,6 @@ input[type="password"]:focus {
  * 7. SCREEN 3: PARTICIPANT GAME VIEW (TABLET / GALAXY TAB S9 FE+)
  * ------------------------------------------------------------- */
 #view-game {
-    display: none;
-    flex-direction: column;
     gap: 15px;
 }
 
@@ -972,7 +968,6 @@ input[type="password"]:focus {
 }
 
 .bingo-board-grid {
-    flex: 1;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
@@ -981,6 +976,7 @@ input[type="password"]:focus {
     border: 1px solid var(--border-dark);
     padding: 15px;
     border-radius: 16px;
+    width: 100%;
     aspect-ratio: 1 / 1;
     max-height: 520px;
     max-width: 520px;
