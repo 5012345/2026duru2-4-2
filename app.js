@@ -37,107 +37,130 @@ const AudioFX = {
     ctx: null,
 
     init() {
-        if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
+        try {
+            if (!this.ctx) {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        } catch (e) {
+            console.warn("Web Audio API 초기화 실패:", e);
         }
     },
 
     playClick() {
-        this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.1);
-
-        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.1);
-    },
-
-    playClaim() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-        osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-        osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
-
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-        osc.start();
-        osc.stop(now + 0.45);
-    },
-
-    playExplosion() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const bufferSize = this.ctx.sampleRate * 0.4;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        
-        // 노이즈 버퍼 생성
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        const noiseNode = this.ctx.createBufferSource();
-        noiseNode.buffer = buffer;
-
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(600, now);
-        filter.frequency.exponentialRampToValueAtTime(10, now + 0.4);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
-        noiseNode.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        noiseNode.start();
-        noiseNode.stop(now + 0.45);
-    },
-
-    playBingo() {
-        this.init();
-        const now = this.ctx.currentTime;
-        const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
-        
-        notes.forEach((freq, index) => {
+        try {
+            this.init();
+            if (!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.connect(gain);
             gain.connect(this.ctx.destination);
 
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, now + index * 0.08);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.1);
 
-            gain.gain.setValueAtTime(0.08, now + index * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + index * 0.08 + 0.15);
+            gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
 
-            osc.start(now + index * 0.08);
-            osc.stop(now + index * 0.08 + 0.18);
-        });
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.1);
+        } catch (e) {
+            console.warn("playClick 재생 실패:", e);
+        }
+    },
+
+    playClaim() {
+        try {
+            this.init();
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+            osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+            osc.start();
+            osc.stop(now + 0.45);
+        } catch (e) {
+            console.warn("playClaim 재생 실패:", e);
+        }
+    },
+
+    playExplosion() {
+        try {
+            this.init();
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const bufferSize = this.ctx.sampleRate * 0.4;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            const noiseNode = this.ctx.createBufferSource();
+            noiseNode.buffer = buffer;
+
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(600, now);
+            filter.frequency.exponentialRampToValueAtTime(10, now + 0.4);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+            noiseNode.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            noiseNode.start();
+            noiseNode.stop(now + 0.45);
+        } catch (e) {
+            console.warn("playExplosion 재생 실패:", e);
+        }
+    },
+
+    playBingo() {
+        try {
+            this.init();
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
+            
+            notes.forEach((freq, index) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, now + index * 0.08);
+
+                gain.gain.setValueAtTime(0.08, now + index * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + index * 0.08 + 0.15);
+
+                osc.start(now + index * 0.08);
+                osc.stop(now + index * 0.08 + 0.18);
+            });
+        } catch (e) {
+            console.warn("playBingo 재생 실패:", e);
+        }
     }
-};
+};;
 
 // ============================================================================
 // 3. CANVAS 2D NEON PARTICLE SYSTEM
@@ -479,14 +502,18 @@ class VirtualMultiplayerEngine {
 
     broadcastGameState() {
         if (localChannel) {
-            localChannel.postMessage({
-                type: 'STATE_UPDATE',
-                currentGameStatus,
-                drawnCardsCount,
-                activeCard,
-                remainingSeconds,
-                players: this.players
-            });
+            try {
+                localChannel.postMessage({
+                    type: 'STATE_UPDATE',
+                    currentGameStatus,
+                    drawnCardsCount,
+                    activeCard,
+                    remainingSeconds,
+                    players: this.players
+                });
+            } catch (e) {
+                console.warn("BroadcastChannel 전송 실패 (STATE_UPDATE):", e);
+            }
         }
     }
 
@@ -644,7 +671,11 @@ function handlePlacementTimeout() {
     } else {
         // 호스트 채널에 타임아웃 통보하여 복구
         if (localChannel) {
-            localChannel.postMessage({ type: 'PLACEMENT_TIMEOUT', playerId: localPlayerId });
+            try {
+                localChannel.postMessage({ type: 'PLACEMENT_TIMEOUT', playerId: localPlayerId });
+            } catch (e) {
+                console.warn("BroadcastChannel 전송 실패 (PLACEMENT_TIMEOUT):", e);
+            }
         }
     }
 }
@@ -760,14 +791,18 @@ function renderMyBoard() {
     } else {
         // 로컬 브로드캐스트 전송
         if (localChannel) {
-            localChannel.postMessage({
-                type: 'PLAYER_BOARD_UPDATE',
-                playerId: localPlayerId,
-                name: localPlayerName,
-                board: myBoard,
-                score: myScore,
-                bingos: myBingos
-            });
+            try {
+                localChannel.postMessage({
+                    type: 'PLAYER_BOARD_UPDATE',
+                    playerId: localPlayerId,
+                    name: localPlayerName,
+                    board: myBoard,
+                    score: myScore,
+                    bingos: myBingos
+                });
+            } catch (e) {
+                console.warn("BroadcastChannel 전송 실패 (PLAYER_BOARD_UPDATE):", e);
+            }
         }
     }
 }
@@ -801,7 +836,7 @@ function updateAdminViews() {
         
         let miniGridHTML = `<div class="mini-board-grid">`;
         for (let i = 0; i < 9; i++) {
-            const cell = p.board[i];
+            const cell = (p.board && p.board[i]) ? p.board[i] : null;
             let cellClass = "mini-cell";
             if (cell) cellClass += " filled";
             miniGridHTML += `<div class="${cellClass}"></div>`;
@@ -863,11 +898,15 @@ function handleJoinGame() {
         
         // 채널을 통해 호스트에게 가입 요청 전송
         if (localChannel) {
-            localChannel.postMessage({
-                type: 'JOIN_REQUEST',
-                playerId: localPlayerId,
-                name: localPlayerName
-            });
+            try {
+                localChannel.postMessage({
+                    type: 'JOIN_REQUEST',
+                    playerId: localPlayerId,
+                    name: localPlayerName
+                });
+            } catch (e) {
+                console.warn("BroadcastChannel 전송 실패 (JOIN_REQUEST):", e);
+            }
         }
         
         renderMyBoard();
@@ -903,11 +942,15 @@ function handleClaimCard() {
     } else {
         // 로컬 모드: 호스트에게 선점 요청
         if (localChannel) {
-            localChannel.postMessage({
-                type: 'CLAIM_REQUEST',
-                playerId: localPlayerId,
-                name: localPlayerName
-            });
+            try {
+                localChannel.postMessage({
+                    type: 'CLAIM_REQUEST',
+                    playerId: localPlayerId,
+                    name: localPlayerName
+                });
+            } catch (e) {
+                console.warn("BroadcastChannel 전송 실패 (CLAIM_REQUEST):", e);
+            }
         }
     }
 }
@@ -945,13 +988,17 @@ function handleBoardCellClick(index) {
     } else {
         // 호스트에게 배치 완료 상태 전송
         if (localChannel) {
-            localChannel.postMessage({
-                type: 'PLACE_SUCCESS',
-                playerId: localPlayerId,
-                board: myBoard,
-                score: myScore,
-                bingos: myBingos
-            });
+            try {
+                localChannel.postMessage({
+                    type: 'PLACE_SUCCESS',
+                    playerId: localPlayerId,
+                    board: myBoard,
+                    score: myScore,
+                    bingos: myBingos
+                });
+            } catch (e) {
+                console.warn("BroadcastChannel 전송 실패 (PLACE_SUCCESS):", e);
+            }
         }
     }
 }
@@ -1289,24 +1336,18 @@ function loadStoredFirebaseConfig() {
             document.getElementById("config-messagingSenderId").value = config.messagingSenderId || "";
             document.getElementById("config-appId").value = config.appId || "";
 
-            // Firebase SDK 초기화
-            const script = document.createElement("script");
-            script.src = "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js";
-            script.onload = () => {
-                const fsScript = document.createElement("script");
-                fsScript.src = "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js";
-                fsScript.onload = () => {
-                    firebase.initializeApp(config);
-                    db = firebase.firestore();
-                    isFirebaseMode = true;
-                    
-                    const badge = document.getElementById("fb-status-badge");
-                    badge.className = "firebase-status-badge online";
-                    badge.querySelector("span").textContent = "Firebase Firestore 온라인";
-                };
-                document.head.appendChild(fsScript);
-            };
-            document.head.appendChild(script);
+            // 이미 index.html 헤더에 선언된 정적 firebase 전역 객체 활용 (비동기 순서 꼬임 원천 차단)
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(config);
+                db = firebase.firestore();
+                isFirebaseMode = true;
+                
+                const badge = document.getElementById("fb-status-badge");
+                badge.className = "firebase-status-badge online";
+                badge.querySelector("span").textContent = "Firebase Firestore 온라인";
+            } else {
+                console.warn("정적 Firebase SDK가 메모리에 존재하지 않습니다. 로컬 모드로 작동합니다.");
+            }
 
         } catch (e) {
             console.error("Firebase 초기화 에러: ", e);
