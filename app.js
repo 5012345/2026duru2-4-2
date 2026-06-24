@@ -394,8 +394,7 @@ class VirtualMultiplayerEngine {
             this.stop();
             currentGameStatus = "finished";
             this.broadcastGameState();
-            alert("모든 카드가 소진되었습니다! 게임 종료.");
-            location.reload();
+            showGameResult(this.players);
             return;
         }
 
@@ -813,12 +812,22 @@ function renderMyBoard() {
 
     const scoreDiff = myScore - oldScore;
     const bingoDiff = myBingos - oldBingos;
+    let hasEffect = false;
 
     if (bingoDiff > 0) {
         showScoreToast(`BINGO! +${bingoDiff * 100}`, 'normal');
+        hasEffect = true;
     }
-    if (scoreDiff - (bingoDiff * 100) > 0) {
-        showScoreToast(`연속 숫자 배치! +${scoreDiff - (bingoDiff * 100)}`, 'bonus');
+    const bonusDiff = scoreDiff - (bingoDiff * 100);
+    if (bonusDiff > 0) {
+        showScoreToast(`연속 숫자 배치! +${bonusDiff}`, 'bonus');
+        hasEffect = true;
+    }
+
+    if (hasEffect) {
+        AudioFX.playBingo();
+        CanvasFX.createBingoCelebration();
+        triggerScreenShake();
     }
 
     cells.forEach((cell, idx) => {
@@ -1032,15 +1041,7 @@ function handleBoardCellClick(index) {
     isMyPlacementTurn = false;
 
     myBoard[index] = activeCard;
-    const prevBingoCount = myBingos;
     renderMyBoard();
-
-    const evaluation = BingoJudge.evaluate(myBoard);
-    if (evaluation.bingoCount > prevBingoCount) {
-        AudioFX.playBingo();
-        CanvasFX.createBingoCelebration();
-        triggerScreenShake();
-    }
 
     if (isFirebaseMode) {
         db.collection("game_state").doc("current").update({
@@ -1151,7 +1152,10 @@ function adminDrawNextCard() {
             const drawnCount = data.drawnCount;
 
             if (drawnCount >= deck.length) {
-                return Promise.reject("All cards drawn");
+                transaction.update(docRef, {
+                    status: "finished"
+                });
+                return "finished_exhausted";
             }
 
             const nextCard = deck[drawnCount];
@@ -1169,7 +1173,15 @@ function adminDrawNextCard() {
             });
             return "drawn";
         });
-    }).then(() => AudioFX.playClick()).catch(err => alert(err));
+    }).then((res) => {
+        if (res !== "finished_exhausted") {
+            AudioFX.playClick();
+        }
+    }).catch(err => {
+        if (err !== "All cards drawn") {
+            alert(err);
+        }
+    });
 }
 
 // ============================================================================

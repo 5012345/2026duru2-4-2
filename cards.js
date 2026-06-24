@@ -138,7 +138,7 @@ class CartoonGraphRenderer {
             if (b >= this.minVal && b <= this.maxVal) {
                 svg += `<g>
                     <circle cx="${y_int_px}" cy="${y_int_py}" r="7" fill="#cc5200" stroke="#fff" stroke-width="2" />
-                    <text x="${y_int_px + 10}" y="${y_int_py + 4}" fill="#cc5200" font-size="12" font-weight="900" font-family="'Orbitron', sans-serif" stroke="#fff" stroke-width="3" paint-order="stroke fill">b=${b}</text>
+                    <text x="${y_int_px + 10}" y="${y_int_py + 4}" fill="#cc5200" font-size="12" font-weight="900" font-family="'Orbitron', sans-serif" stroke="#fff" stroke-width="3" paint-order="stroke fill">y=${b}</text>
                 </g>`;
             }
 
