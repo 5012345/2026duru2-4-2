@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <!-- CSS Link -->
-  <link rel="stylesheet" crossorigin href="/assets/index-BBTT0ob8.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-DE11ueJt.css">
 </head>
 <body class="neon-dark-theme">
     <!-- 전체 진동 연출용 래퍼 -->
@@ -68,6 +68,10 @@
                     <label>appId</label>
                     <input type="text" id="config-appId" placeholder="1:12345:web:abcd">
                 </div>
+                <div class="form-group">
+                    <label>관리자 비밀번호 확인 (2525)</label>
+                    <input type="password" id="config-admin-password" placeholder="••••">
+                </div>
                 <div class="modal-actions">
                     <button id="btn-save-config" class="btn btn-lime">설정 저장</button>
                     <button id="btn-close-config" class="btn btn-gray">닫기</button>
@@ -80,8 +84,8 @@
             <div class="modal-content">
                 <h2>관리자 인증</h2>
                 <div class="form-group">
-                    <label>비밀번호 (기본: admin123)</label>
-                    <input type="password" id="admin-password" placeholder="••••••••">
+                    <label>비밀번호 (기본: 2525)</label>
+                    <input type="password" id="admin-password" placeholder="••••">
                 </div>
                 <div class="modal-actions">
                     <button id="btn-admin-login" class="btn btn-pink">로그인</button>
@@ -98,6 +102,7 @@
                     <span class="badge" id="admin-player-count">접속 인원: 0 / 12</span>
                 </div>
                 <div class="header-right">
+                    <button id="btn-admin-fill-ai" class="btn btn-lime">AI봇 채우기</button>
                     <button id="btn-admin-start" class="btn btn-pink">게임 시작</button>
                     <button id="btn-admin-next" class="btn btn-cyan" disabled>다음 카드 드로우</button>
                     <button id="btn-admin-reset" class="btn btn-red">게임 전체 리셋</button>
@@ -200,12 +205,12 @@
                                 <span class="hint-value" id="hint-slope">-</span>
                             </div>
                             <div class="hint-box">
-                                <span class="hint-label">y절편</span>
-                                <span class="hint-value" id="hint-y-int">-</span>
-                            </div>
-                            <div class="hint-box">
                                 <span class="hint-label">x절편</span>
                                 <span class="hint-value" id="hint-x-int">-</span>
+                            </div>
+                            <div class="hint-box">
+                                <span class="hint-label">y절편</span>
+                                <span class="hint-value" id="hint-y-int">-</span>
                             </div>
                         </div>
 
@@ -249,7 +254,39 @@
             </main>
         </section>
 
+        <!-- 4. 게임 결과 모달 -->
+        <div id="modal-game-result" class="modal">
+            <div class="modal-content result-modal-content">
+                <h2 class="neon-text-pink font-orbit" style="text-align: center; font-size: 2.2rem; letter-spacing: 2px;">GAME OVER</h2>
+                <div class="winner-display">
+                    <span class="winner-title">WINNER</span>
+                    <span class="winner-name font-orbit winner-highlight" id="result-winner-name">-</span>
+                </div>
+                <div class="result-table-container">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>닉네임</th>
+                                <th>점수</th>
+                                <th>빙고</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-table-body">
+                            <!-- 실시간 결과 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-actions">
+                    <button id="btn-close-result" class="btn btn-pink">대기실로 이동</button>
+                </div>
+            </div>
+        </div>
+
     </div> <!-- game-container-wrapper -->
+
+    <!-- 점수 획득 플로팅 토스트 컨테이너 -->
+    <div id="score-toast-container"></div>
 
     <!-- Canvas 이펙트 레이어 (파티클 등) -->
     <canvas id="effects-canvas"></canvas>

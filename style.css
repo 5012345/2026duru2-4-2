@@ -1129,3 +1129,149 @@ input[type="password"]:focus {
         max-height: 220px;
     }
 }
+
+/* -------------------------------------------------------------
+ * 9. SCORE TOAST SYSTEM & GAME OVER RESULT MODAL
+ * ------------------------------------------------------------- */
+#score-toast-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.score-toast {
+    font-family: var(--font-orbit);
+    font-weight: 900;
+    font-size: 2.5rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px rgba(0, 240, 255, 0.4);
+    opacity: 0.5;
+    animation: toast-up-fade 1.5s ease-out forwards;
+    background: rgba(8, 9, 15, 0.85);
+    padding: 10px 25px;
+    border-radius: 12px;
+    border: 1px dashed var(--neon-cyan);
+}
+
+.score-toast.bonus {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink), 0 0 20px rgba(255, 0, 127, 0.4);
+    border-color: var(--neon-pink);
+}
+
+@keyframes toast-up-fade {
+    0% {
+        transform: translateY(30px) scale(0.8);
+        opacity: 0;
+    }
+    15% {
+        transform: translateY(0) scale(1.1);
+        opacity: 0.5;
+    }
+    80% {
+        transform: translateY(-20px) scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(-50px) scale(0.9);
+        opacity: 0;
+    }
+}
+
+/* Result Modal Custom Styling */
+.result-modal-content {
+    max-width: 600px;
+    background: radial-gradient(circle at center, #1b162b 0%, #0d0e15 100%) !important;
+    border-color: var(--neon-pink) !important;
+    box-shadow: 0 0 25px rgba(255, 0, 127, 0.3) !important;
+}
+
+.winner-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 20px;
+    background: rgba(255, 0, 127, 0.05);
+    border: 1px solid rgba(255, 0, 127, 0.2);
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.winner-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #8c93b6;
+    letter-spacing: 4px;
+}
+
+.winner-name {
+    font-size: 2.2rem;
+    font-weight: 900;
+}
+
+/* 1위 우승자 네온 번쩍임 효과 */
+.winner-highlight {
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px var(--neon-pink), 0 0 20px var(--neon-pink);
+    animation: winner-glow-pulse 1s infinite alternate;
+}
+
+@keyframes winner-glow-pulse {
+    from {
+        text-shadow: 0 0 8px var(--neon-pink), 0 0 20px var(--neon-pink), 0 0 30px rgba(255, 0, 127, 0.5);
+        transform: scale(1);
+    }
+    to {
+        text-shadow: 0 0 15px var(--neon-pink), 0 0 30px var(--neon-pink), 0 0 50px rgba(255, 0, 127, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+.result-table-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--border-dark);
+    border-radius: 8px;
+    background-color: var(--bg-darker);
+    margin-bottom: 15px;
+}
+
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.result-table th, .result-table td {
+    padding: 12px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.result-table th {
+    background-color: #121422;
+    color: #8c93b6;
+    font-family: var(--font-orbit);
+    font-weight: bold;
+}
+
+.result-table tr:last-child td {
+    border-bottom: none;
+}
+
+.result-table tbody tr.winner-row {
+    background-color: rgba(255, 0, 127, 0.08);
+}
+
+.result-table tbody tr.winner-row td {
+    color: var(--neon-pink);
+    font-weight: bold;
+}

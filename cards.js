@@ -174,10 +174,119 @@ class NeonGraphRenderer {
     }
 }
 
+function generateDynamicDeck(playerCount) {
+    const requiredCardsCount = (playerCount + 1) * 9;
+    const usedFormulas = new Set();
+    const deck = [];
+
+    let iterations = 0;
+    while (deck.length < requiredCardsCount && iterations < 20000) {
+        iterations++;
+        // 50% 확률로 표준형(y=ax+b) 또는 일반형(ax+by+c=0) 선택
+        const isStandard = Math.random() < 0.5;
+
+        if (isStandard) {
+            // a, b는 [-10, 10] 범위의 임의 정수
+            const a = Math.floor(Math.random() * 21) - 10;
+            const b = Math.floor(Math.random() * 21) - 10;
+
+            if (a === 0) continue; // 일차함수
+
+            const x_int = -b / a;
+            
+            // y = ax + b 문자열 포맷
+            let aStr = "";
+            if (a === 1) aStr = "x";
+            else if (a === -1) aStr = "-x";
+            else aStr = `${a}x`;
+
+            let bStr = "";
+            if (b > 0) bStr = ` + ${b}`;
+            else if (b < 0) bStr = ` - ${Math.abs(b)}`;
+
+            const formula = `y = ${aStr}${bStr}`;
+
+            if (!usedFormulas.has(formula)) {
+                usedFormulas.add(formula);
+                deck.push({
+                    id: `card_${deck.length + 1}`,
+                    formula: formula,
+                    a: a,
+                    b: b,
+                    x_int: Number(x_int.toFixed(2))
+                });
+            }
+        } else {
+            // ax + by + c = 0
+            const a = Math.floor(Math.random() * 21) - 10;
+            const b = Math.floor(Math.random() * 21) - 10;
+            const c = Math.floor(Math.random() * 21) - 10;
+
+            if (a === 0 || b === 0) continue; // 일차함수
+
+            // 2개 이상 정수 조건 검사 (기울기: -a/b, y절편: -c/b, x절편: -c/a)
+            let integerPropsCount = 0;
+            if (a % b === 0) integerPropsCount++;
+            if (c % b === 0) integerPropsCount++;
+            if (c % a === 0) integerPropsCount++;
+
+            if (integerPropsCount < 2) continue;
+
+            const slope = -a / b;
+            const y_int = -c / b;
+            const x_int = -c / a;
+
+            // ax + by + c = 0 문자열 포맷
+            let aStr = "";
+            if (a === 1) aStr = "x";
+            else if (a === -1) aStr = "-x";
+            else aStr = `${a}x`;
+
+            let bStr = "";
+            if (b === 1) bStr = " + y";
+            else if (b === -1) bStr = " - y";
+            else if (b > 0) bStr = ` + ${b}y`;
+            else if (b < 0) bStr = ` - ${Math.abs(b)}y`;
+
+            let cStr = "";
+            if (c > 0) cStr = ` + ${c}`;
+            else if (c < 0) cStr = ` - ${Math.abs(c)}`;
+
+            const formula = `${aStr}${bStr}${cStr} = 0`;
+
+            if (!usedFormulas.has(formula)) {
+                usedFormulas.add(formula);
+                deck.push({
+                    id: `card_${deck.length + 1}`,
+                    formula: formula,
+                    a: Number(slope.toFixed(2)),
+                    b: Number(y_int.toFixed(2)),
+                    x_int: Number(x_int.toFixed(2))
+                });
+            }
+        }
+    }
+
+    if (deck.length < requiredCardsCount) {
+        console.warn("충분한 동적 카드를 생성하지 못해 기본 카드로 백업합니다.");
+        const baseDeck = [...INITIAL_CARD_DECK];
+        while (deck.length < requiredCardsCount) {
+            const fallbackCard = baseDeck[deck.length % baseDeck.length];
+            deck.push({
+                ...fallbackCard,
+                id: `card_fallback_${deck.length + 1}`
+            });
+        }
+    }
+
+    return deck;
+}
+
 // 브라우저 및 Node(테스트 환경)에서 모두 참조할 수 있게 export 처리
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = { INITIAL_CARD_DECK, NeonGraphRenderer };
+    module.exports = { INITIAL_CARD_DECK, NeonGraphRenderer, generateDynamicDeck };
 } else {
     window.INITIAL_CARD_DECK = INITIAL_CARD_DECK;
     window.NeonGraphRenderer = NeonGraphRenderer;
+    window.generateDynamicDeck = generateDynamicDeck;
 }

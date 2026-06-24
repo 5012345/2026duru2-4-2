@@ -372,8 +372,8 @@ class VirtualMultiplayerEngine {
         }));
     }
 
-    start() {
-        cardDeck = [...INITIAL_CARD_DECK];
+    start(playerCount) {
+        cardDeck = generateDynamicDeck(playerCount);
         this.shuffle(cardDeck);
         drawnCardsCount = 0;
         currentGameStatus = "active";
@@ -437,7 +437,7 @@ class VirtualMultiplayerEngine {
                 }, []);
 
                 if (emptyIndices.length > 0) {
-                    const placeIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+                    const placeIndex = findBestPlacementIndex(player.board, activeCard);
                     player.board[placeIndex] = activeCard;
                     
                     const result = BingoJudge.evaluate(player.board);
@@ -500,9 +500,18 @@ class VirtualMultiplayerEngine {
     tick() {
         if (currentGameStatus !== "active") return;
 
-        // 가상 유저들의 선점 시뮬레이션
-        if (activeCard && activeCard.status === "active") {
-            const chance = remainingSeconds <= 20 ? 0.15 : 0.02;
+        // 전원 완료 체크 추가
+        const allFilled = this.players.every(p => p.board && p.board.every(cell => cell !== null));
+        if (allFilled) {
+            this.stop();
+            currentGameStatus = "finished";
+            this.broadcastGameState();
+            return;
+        }
+
+        // 가상 유저들의 선점 시뮬레이션 (남은 시간이 5초 이하일 때만 선점 시도!)
+        if (activeCard && activeCard.status === "active" && remainingSeconds <= 5) {
+            const chance = 0.4;
             if (Math.random() < chance) {
                 const onlinePlayers = this.players.filter(p => p.online && p.id !== localPlayerId);
                 if (onlinePlayers.length > 0) {
@@ -578,6 +587,18 @@ function initUI() {
     document.getElementById("btn-admin-next").addEventListener("click", handleAdminNextCard);
     document.getElementById("btn-admin-reset").addEventListener("click", handleAdminResetGame);
     document.getElementById("btn-admin-exit").addEventListener("click", handleAdminLogout);
+
+    const fillAiBtn = document.getElementById("btn-admin-fill-ai");
+    if (fillAiBtn) {
+        fillAiBtn.addEventListener("click", handleAdminFillAI);
+    }
+    const closeResultBtn = document.getElementById("btn-close-result");
+    if (closeResultBtn) {
+        closeResultBtn.addEventListener("click", () => {
+            document.getElementById("modal-game-result").classList.remove("active");
+            location.reload();
+        });
+    }
 
     // BroadcastChannel 메세지 리스너 바인딩 (탭 동기화)
     if (localChannel) {
@@ -773,10 +794,23 @@ function renderMyBoard() {
     const cells = document.querySelectorAll(".board-cell");
     const evaluation = BingoJudge.evaluate(myBoard);
 
+    const oldScore = myScore;
+    const oldBingos = myBingos;
+
     myScore = evaluation.score;
     myBingos = evaluation.bingoCount;
     document.getElementById("game-my-score").textContent = String(myScore).padStart(4, "0");
     document.getElementById("game-my-bingos").textContent = myBingos;
+
+    const scoreDiff = myScore - oldScore;
+    const bingoDiff = myBingos - oldBingos;
+
+    if (bingoDiff > 0) {
+        showScoreToast(`BINGO! +${bingoDiff * 100}`, 'normal');
+    }
+    if (scoreDiff - (bingoDiff * 100) > 0) {
+        showScoreToast(`연속 숫자 배치! +${scoreDiff - (bingoDiff * 100)}`, 'bonus');
+    }
 
     cells.forEach((cell, idx) => {
         const card = myBoard[idx];
@@ -792,8 +826,8 @@ function renderMyBoard() {
                 <div class="cell-formula">${card.formula}</div>
                 <div class="cell-properties">
                     <div class="prop-item">기울기 <span>${card.a}</span></div>
-                    <div class="prop-item">y절편 <span>${card.b}</span></div>
                     <div class="prop-item">x절편 <span>${card.x_int}</span></div>
+                    <div class="prop-item">y절편 <span>${card.b}</span></div>
                 </div>
             `;
         } else {
@@ -1028,7 +1062,7 @@ function handleBoardCellClick(index) {
 
 function handleAdminLogin() {
     const pw = document.getElementById("admin-password").value;
-    if (pw === "admin123") {
+    if (pw === "2525") {
         isHost = true;
         document.getElementById("modal-admin-login").classList.remove("active");
         document.getElementById("view-lobby").classList.remove("active");
@@ -1055,15 +1089,21 @@ function handleAdminLogout() {
 }
 
 function handleAdminStartGame() {
+    const allPlayers = isFirebaseMode 
+        ? Object.values(firestorePlayersMap) 
+        : (virtualEngine ? virtualEngine.players : []);
+    const playerCount = allPlayers.length;
+
     if (isFirebaseMode) {
+        const dynamicDeck = generateDynamicDeck(playerCount);
         db.collection("game_state").doc("current").set({
             status: "active",
             cardId: null,
-            deck: INITIAL_CARD_DECK.sort(() => Math.random() - 0.5),
+            deck: dynamicDeck.sort(() => Math.random() - 0.5),
             drawnCount: 0
         }).then(() => adminDrawNextCard());
     } else {
-        virtualEngine.start();
+        virtualEngine.start(playerCount);
     }
 }
 
@@ -1195,10 +1235,16 @@ function handleChannelMessage(e) {
                 drawnCardsCount = msg.drawnCardsCount;
                 
                 // 남은 카드수 프로그레스 바 갱신
-                const total = 32;
-                const progress = ((total - drawnCardsCount) / total) * 100;
+                const total = (msg.players.length + 1) * 9;
+                const progress = Math.max(0, ((total - drawnCardsCount) / total) * 100);
                 document.getElementById("game-cards-progress").style.width = `${progress}%`;
-                document.getElementById("game-cards-left").textContent = `${total - drawnCardsCount} / ${total}`;
+                document.getElementById("game-cards-left").textContent = `${Math.max(0, total - drawnCardsCount)} / ${total}`;
+
+                if (currentGameStatus === "finished") {
+                    showGameResult(msg.players);
+                } else {
+                    checkGameOver(msg.players);
+                }
 
                 if (msg.activeCard) {
                     // 카드가 변경되었거나 갱신된 경우
@@ -1234,6 +1280,7 @@ function handleChannelMessage(e) {
 // ============================================================================
 let firestorePlayersMap = {};
 
+let playersListener = null;
 function listenToGameState() {
     if (!db) return;
 
@@ -1244,10 +1291,20 @@ function listenToGameState() {
         currentGameStatus = data.status;
         drawnCardsCount = data.drawnCount || 0;
         
-        const total = 32;
-        const progress = ((total - drawnCardsCount) / total) * 100;
-        document.getElementById("game-cards-progress").style.width = `${progress}%`;
-        document.getElementById("game-cards-left").textContent = `${total - drawnCardsCount} / ${total}`;
+        db.collection("players").get().then((snap) => {
+            const totalCards = (snap.size + 1) * 9;
+            const progress = Math.max(0, ((totalCards - drawnCardsCount) / totalCards) * 100);
+            document.getElementById("game-cards-progress").style.width = `${progress}%`;
+            document.getElementById("game-cards-left").textContent = `${Math.max(0, totalCards - drawnCardsCount)} / ${totalCards}`;
+        });
+
+        if (currentGameStatus === "finished") {
+            db.collection("players").get().then((snap) => {
+                const plist = [];
+                snap.forEach(d => plist.push(d.data()));
+                showGameResult(plist);
+            });
+        }
 
         if (data.cardId) {
             if (!activeCard || activeCard.id !== data.cardId) {
@@ -1284,6 +1341,13 @@ function listenToGameState() {
             clearInterval(cardTimer);
             renderActiveCard();
         }
+    });
+
+    if (playersListener) playersListener();
+    playersListener = db.collection("players").onSnapshot((snapshot) => {
+        const plist = [];
+        snapshot.forEach(d => plist.push(d.data()));
+        checkGameOver(plist);
     });
 }
 
@@ -1324,6 +1388,12 @@ function listenToAdminState() {
 // ============================================================================
 
 function handleSaveFirebaseConfig() {
+    const adminPw = document.getElementById("config-admin-password").value;
+    if (adminPw !== "2525") {
+        alert("관리자 비밀번호가 일치하지 않습니다.");
+        return;
+    }
+
     const config = {
         apiKey: document.getElementById("config-apiKey").value.trim(),
         authDomain: document.getElementById("config-authDomain").value.trim(),
@@ -1419,4 +1489,179 @@ if (document.readyState === "loading") {
     window.addEventListener("DOMContentLoaded", initUI);
 } else {
     initUI();
+}
+
+// ============================================================================
+// 13. NEW ENHANCEMENTS HELPERS & HANDLERS
+// ============================================================================
+function findBestPlacementIndex(board, card) {
+    let bestIndex = -1;
+    let maxScore = -1;
+    let emptyIndices = [];
+    
+    for (let i = 0; i < 9; i++) {
+        if (board[i] === null) {
+            emptyIndices.push(i);
+            let tempBoard = [...board];
+            tempBoard[i] = card;
+            
+            const result = BingoJudge.evaluate(tempBoard);
+            if (result.score > maxScore) {
+                maxScore = result.score;
+                bestIndex = i;
+            }
+        }
+    }
+    
+    if (maxScore === 0 && emptyIndices.length > 0) {
+        return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+    }
+    return bestIndex;
+}
+
+function showScoreToast(text, type = 'normal') {
+    const container = document.getElementById("score-toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `score-toast ${type === 'bonus' ? 'bonus' : ''}`;
+    toast.textContent = text;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 1500);
+}
+
+function handleAdminFillAI() {
+    if (!isHost) return;
+    
+    const allPlayers = isFirebaseMode 
+        ? Object.values(firestorePlayersMap) 
+        : (virtualEngine ? virtualEngine.players : []);
+
+    const maxPlayers = 12;
+    const currentCount = allPlayers.length;
+
+    if (currentCount >= maxPlayers) {
+        alert("이미 정원(12명)이 가득 찼습니다.");
+        return;
+    }
+
+    const availableSlots = maxPlayers - currentCount;
+    const input = prompt(`추가할 AI 봇의 수를 입력하세요. (최대 ${availableSlots}명)`);
+    if (input === null) return;
+
+    const count = parseInt(input.trim());
+    if (isNaN(count) || count <= 0) {
+        alert("올바른 숫자를 입력하세요.");
+        return;
+    }
+
+    if (count > availableSlots) {
+        alert(`최대 ${availableSlots}명까지만 추가할 수 있습니다.`);
+        return;
+    }
+
+    const aiNames = ["선우", "서진", "민재", "하린", "도현", "서아", "시우", "지민", "우진", "채원", "유준", "수아"];
+    const existingNames = new Set(allPlayers.map(p => p.name));
+    const availableNames = aiNames.filter(name => !existingNames.has(name));
+
+    let addedCount = 0;
+    for (let i = 0; i < count; i++) {
+        const botName = (availableNames.length > 0) 
+            ? availableNames.shift() 
+            : `AI봇_${Math.floor(Math.random() * 1000)}`;
+            
+        const botId = `ai_bot_${Math.random().toString(36).substring(2, 9)}`;
+
+        if (isFirebaseMode) {
+            db.collection("players").doc(botId).set({
+                id: botId,
+                name: botName + " (AI)",
+                score: 0,
+                bingos: 0,
+                board: Array(9).fill(null),
+                online: true,
+                isAI: true,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } else {
+            if (virtualEngine) {
+                virtualEngine.players.push({
+                    id: botId,
+                    name: botName + " (AI)",
+                    score: 0,
+                    bingos: 0,
+                    board: Array(9).fill(null),
+                    online: true,
+                    isAI: true
+                });
+            }
+        }
+        addedCount++;
+    }
+
+    if (!isFirebaseMode && virtualEngine) {
+        virtualEngine.broadcastGameState();
+        updateAdminViews();
+    }
+    alert(`${addedCount}명의 AI 봇이 추가되었습니다.`);
+}
+
+function checkGameOver(players) {
+    if (currentGameStatus !== "active") return;
+    if (players.length === 0) return;
+
+    const allFilled = players.every(p => {
+        return p.board && p.board.length === 9 && p.board.every(cell => cell !== null);
+    });
+
+    if (allFilled) {
+        currentGameStatus = "finished";
+        if (isFirebaseMode) {
+            if (isHost) {
+                db.collection("game_state").doc("current").update({
+                    status: "finished"
+                });
+            }
+        } else {
+            if (isHost && virtualEngine) {
+                virtualEngine.stop();
+                virtualEngine.broadcastGameState();
+            }
+        }
+        showGameResult(players);
+    }
+}
+
+function showGameResult(players) {
+    const sorted = [...players].sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return b.bingos - a.bingos;
+    });
+
+    const winner = sorted[0];
+    document.getElementById("result-winner-name").textContent = winner ? winner.name : "-";
+
+    const tbody = document.getElementById("result-table-body");
+    tbody.innerHTML = "";
+
+    sorted.forEach((p, idx) => {
+        const rank = idx + 1;
+        const tr = document.createElement("tr");
+        if (rank === 1) {
+            tr.className = "winner-row";
+        }
+        tr.innerHTML = `
+            <td>${rank}</td>
+            <td>${p.name}</td>
+            <td>${p.score}</td>
+            <td>${p.bingos}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById("modal-game-result").classList.add("active");
 }
