@@ -203,7 +203,6 @@ body {
 #view-lobby {
     justify-content: center;
     align-items: center;
-    position: relative;
     background: radial-gradient(circle at center, #181b30 0%, var(--bg-darker) 100%);
 }
 
