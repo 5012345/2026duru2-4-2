@@ -1415,4 +1415,8 @@ window.testBingoLogic = function() {
     console.log(`획득 점수: ${res3.score} (기대값: 100)`);
 };
 
-window.addEventListener("DOMContentLoaded", initUI);
+if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", initUI);
+} else {
+    initUI();
+}
