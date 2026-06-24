@@ -5,8 +5,14 @@ let firebaseApp = null;
 let db = null;
 let isFirebaseMode = false;
 
-// 로컬 브라우저 탭 간 실시간 동기화를 위한 BroadcastChannel (Firebase 없을 시 무설정 연동)
-const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('neon_bingo_local_channel') : null;
+let localChannel = null;
+try {
+    if (typeof BroadcastChannel !== 'undefined') {
+        localChannel = new BroadcastChannel('neon_bingo_local_channel');
+    }
+} catch (e) {
+    console.warn("BroadcastChannel 생성 차단됨 (로컬 동기화 기능이 제한됩니다):", e);
+}
 
 // 게임 상태 변수
 let localPlayerId = "player_" + Math.random().toString(36).substring(2, 9);
@@ -172,13 +178,18 @@ const CanvasFX = {
 
     init() {
         this.canvas = document.getElementById("effects-canvas");
-        this.ctx = this.canvas.getContext("2d");
+        if (this.canvas) {
+            this.canvas.style.display = "none"; // 최초 로딩 시 완전 숨김
+        }
+        this.ctx = this.canvas ? this.canvas.getContext("2d") : null;
+        if (!this.ctx) return;
         this.resize();
         window.addEventListener("resize", () => this.resize());
         this.loop();
     },
 
     resize() {
+        if (!this.canvas) return;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
     },
@@ -219,7 +230,15 @@ const CanvasFX = {
 
     loop() {
         requestAnimationFrame(() => this.loop());
-        if (!this.ctx) return;
+        if (!this.ctx || !this.canvas) return;
+
+        // 파티클 존재 여부에 따라 캔버스 DOM 표시 제어 (구형 렌더러의 블랙 스크린 덮어쓰기 원천 예방)
+        if (this.particles.length > 0) {
+            this.canvas.style.display = "block";
+        } else {
+            this.canvas.style.display = "none";
+            return; // 파티클이 없으면 지우거나 그리지 않고 대기
+        }
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
