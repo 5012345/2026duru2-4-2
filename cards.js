@@ -42,7 +42,7 @@ const INITIAL_CARD_DECK = [
 /**
  * 주어진 일차함수를 기반으로 SVG 그래프 요소를 동적 생성하는 렌더러 클래스
  */
-class NeonGraphRenderer {
+class CartoonGraphRenderer {
     /**
      * @param {string} containerId - SVG가 들어갈 DOM 컨테이너의 ID
      */
@@ -79,38 +79,37 @@ class NeonGraphRenderer {
 
         const { a, b, x_int } = card;
 
-        // SVG 뼈대 구성
-        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${this.width} ${this.height}" xmlns="http://www.w3.org/2000/svg" style="background-color: #0e0f16; border-radius: 8px;">`;
+        // SVG 뼈대 구성 (배경 투명 처리로 card_frame.png 투과되도록 유도)
+        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${this.width} ${this.height}" xmlns="http://www.w3.org/2000/svg" style="background-color: transparent;">`;
 
-        // 1. 그리드 격자 (Grid Lines)
-        svg += `<g stroke="#1d2030" stroke-width="1">`;
+        // 1. 그리드 격자 (부드러운 갈색 툰 격자)
+        svg += `<g stroke="#e2d0b9" stroke-width="1.5">`;
         for (let i = this.minVal; i <= this.maxVal; i++) {
-            if (i === 0) continue; // 축은 따로 그림
+            if (i === 0) continue;
             const gx = this.mapX(i);
             const gy = this.mapY(i);
             // 세로선
-            svg += `<line x1="${gx}" y1="${this.padding}" x2="${gx}" y2="${this.height - this.padding}" stroke-dasharray="1,4" />`;
+            svg += `<line x1="${gx}" y1="${this.padding}" x2="${gx}" y2="${this.height - this.padding}" stroke-dasharray="2,3" />`;
             // 가로선
-            svg += `<line x1="${this.padding}" y1="${gy}" x2="${this.width - this.padding}" y2="${gy}" stroke-dasharray="1,4" />`;
+            svg += `<line x1="${this.padding}" y1="${gy}" x2="${this.width - this.padding}" y2="${gy}" stroke-dasharray="2,3" />`;
         }
         svg += `</g>`;
 
-        // 2. 메인 X축, Y축
+        // 2. 메인 X축, Y축 (진한 회갈색 툰 축)
         const axisX = this.mapX(0);
         const axisY = this.mapY(0);
-        svg += `<g stroke="#3f4566" stroke-width="2">`;
+        svg += `<g stroke="#6d503b" stroke-width="3" stroke-linecap="round">`;
         // X축
         svg += `<line x1="${this.padding}" y1="${axisY}" x2="${this.width - this.padding}" y2="${axisY}" />`;
         // Y축
         svg += `<line x1="${axisX}" y1="${this.padding}" x2="${axisX}" y2="${this.height - this.padding}" />`;
         svg += `</g>`;
 
-        // 축 텍스트 (화살표 또는 최소/최대 표시)
-        svg += `<text x="${this.width - this.padding - 5}" y="${axisY - 5}" fill="#5d6699" font-size="10" font-family="Inter, sans-serif">x</text>`;
-        svg += `<text x="${axisX + 5}" y="${this.padding + 10}" fill="#5d6699" font-size="10" font-family="Inter, sans-serif">y</text>`;
+        // 축 텍스트 (갈색 카툰 텍스트)
+        svg += `<text x="${this.width - this.padding - 8}" y="${axisY - 6}" fill="#6d503b" font-weight="900" font-size="12" font-family="Inter, sans-serif">x</text>`;
+        svg += `<text x="${axisX + 6}" y="${this.padding + 12}" fill="#6d503b" font-weight="900" font-size="12" font-family="Inter, sans-serif">y</text>`;
 
         // 3. 일차함수 그래프 선 그리기
-        // y = ax + b의 양 끝점 계산 (-10, y1) -> (10, y2)
         const y1 = a * this.minVal + b;
         const y2 = a * this.maxVal + b;
 
@@ -119,55 +118,42 @@ class NeonGraphRenderer {
         const x2_pixel = this.mapX(this.maxVal);
         const y2_pixel = this.mapY(y2);
 
-        // 네온 필터/글로우 효과 정의
-        svg += `<defs>
-            <filter id="neon-glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                </feMerge>
-            </filter>
-            <filter id="neon-glow-pink" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                </feMerge>
-            </filter>
-        </defs>`;
-
-        // 그래프 선
-        svg += `<g filter="url(#neon-glow-cyan)">`;
-        svg += `<line x1="${x1_pixel}" y1="${y1_pixel}" x2="${x2_pixel}" y2="${y2_pixel}" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" />`;
+        // 툰 스타일의 굵고 뚜렷한 파란색 함수 선 (그림자 효과 적용)
+        svg += `<g stroke="#0044cc" stroke-width="8" stroke-linecap="round" opacity="0.15">
+            <line x1="${x1_pixel}" y1="${y1_pixel + 3}" x2="${x2_pixel}" y2="${y2_pixel + 3}" />
+        </g>`;
+        svg += `<g>`;
+        svg += `<line x1="${x1_pixel}" y1="${y1_pixel}" x2="${x2_pixel}" y2="${y2_pixel}" stroke="#0066ff" stroke-width="6" stroke-linecap="round" />`;
         svg += `</g>`;
 
-        // 4. 힌트 활성화 시 절편 포인트(점) 표시
+        // 4. 힌트 활성화 시 절편 포인트(점) 표시 (네온 제거 -> 카툰 주황/빨강 도트)
         if (showHints) {
-            // Y절편 (0, b)
             const y_int_px = this.mapX(0);
             const y_int_py = this.mapY(b);
 
-            // X절편 (x_int, 0)
             const x_int_px = this.mapX(x_int);
             const x_int_py = this.mapY(0);
 
             // Y절편 도트
             if (b >= this.minVal && b <= this.maxVal) {
-                svg += `<g filter="url(#neon-glow-pink)">
-                    <circle cx="${y_int_px}" cy="${y_int_py}" r="6" fill="#ff007f" />
-                    <text x="${y_int_px + 8}" y="${y_int_py + 4}" fill="#ff007f" font-size="11" font-weight="bold" font-family="'Orbitron', sans-serif">b=${b}</text>
+                svg += `<g>
+                    <circle cx="${y_int_px}" cy="${y_int_py}" r="7" fill="#cc5200" stroke="#fff" stroke-width="2" />
+                    <text x="${y_int_px + 10}" y="${y_int_py + 4}" fill="#cc5200" font-size="12" font-weight="900" font-family="'Orbitron', sans-serif" stroke="#fff" stroke-width="3" paint-order="stroke fill">b=${b}</text>
                 </g>`;
             }
 
             // X절편 도트
             if (x_int >= this.minVal && x_int <= this.maxVal) {
-                svg += `<g filter="url(#neon-glow-pink)">
-                    <circle cx="${x_int_px}" cy="${x_int_py}" r="6" fill="#ff007f" />
-                    <text x="${x_int_px - 15}" y="${x_int_py - 8}" fill="#ff007f" font-size="11" font-weight="bold" font-family="'Orbitron', sans-serif">x=${x_int}</text>
+                svg += `<g>
+                    <circle cx="${x_int_px}" cy="${x_int_py}" r="7" fill="#cc5200" stroke="#fff" stroke-width="2" />
+                    <text x="${x_int_px - 20}" y="${x_int_py - 10}" fill="#cc5200" font-size="12" font-weight="900" font-family="'Orbitron', sans-serif" stroke="#fff" stroke-width="3" paint-order="stroke fill">x=${x_int}</text>
                 </g>`;
             }
         }
+
+        svg += `</svg>`;
+        this.container.innerHTML = svg;
+    }
 
         svg += `</svg>`;
         this.container.innerHTML = svg;
@@ -283,9 +269,9 @@ function generateDynamicDeck(playerCount) {
 
 // 브라우저 및 Node(테스트 환경)에서 모두 참조할 수 있게 export 처리
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = { INITIAL_CARD_DECK, NeonGraphRenderer, generateDynamicDeck };
+    module.exports = { INITIAL_CARD_DECK, CartoonGraphRenderer, generateDynamicDeck };
 } else {
     window.INITIAL_CARD_DECK = INITIAL_CARD_DECK;
-    window.NeonGraphRenderer = NeonGraphRenderer;
+    window.CartoonGraphRenderer = CartoonGraphRenderer;
     window.generateDynamicDeck = generateDynamicDeck;
 }

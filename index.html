@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일차함수 빙고: 네온 팝 아케이드</title>
+    <title>일차함수 빙고: 사막의 협곡</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <!-- Firebase Compat SDKs -->
@@ -19,8 +19,8 @@
         <!-- 1. 대기실 / 로그인 화면 -->
         <section id="view-lobby" class="game-view active">
             <div class="lobby-card">
-                <h1 class="logo neon-text-glitch" data-text="LINEAR BINGO">LINEAR BINGO</h1>
-                <p class="subtitle">일차함수 빙고: 네온 팝 아케이드</p>
+                <h1 class="logo" data-text="LINEAR BINGO">LINEAR BINGO</h1>
+                <p class="subtitle">일차함수 빙고: 사막의 협곡</p>
                 
                 <div class="firebase-status-badge offline" id="fb-status-badge">
                     <span>로컬 싱글/가상 멀티 모드</span>
@@ -28,7 +28,7 @@
 
                 <div class="input-group">
                     <input type="text" id="player-nickname" placeholder="닉네임을 입력하세요 (최대 8자)" maxlength="8" autocomplete="off">
-                    <button id="btn-join" class="btn btn-pink neon-glow-pink">게임 참여하기</button>
+                    <button id="btn-join" class="btn">게임 참여하기</button>
                 </div>
 
                 <!-- Firebase 연결 설정 패널 토글 -->
@@ -94,7 +94,7 @@
         <section id="view-admin" class="game-view">
             <header class="admin-header">
                 <div class="header-left">
-                    <h2 class="neon-text-cyan">ADMIN CONTROL</h2>
+                    <h2 class="cartoon-text-blue">ADMIN CONTROL</h2>
                     <span class="badge" id="admin-player-count">접속 인원: 0 / 12</span>
                 </div>
                 <div class="header-right">
@@ -121,11 +121,11 @@
                         </div>
                         <div class="state-item">
                             <span class="label">현재 카드</span>
-                            <span class="value font-orbit text-cyan" id="admin-current-formula">없음</span>
+                            <span class="value font-orbit cartoon-text-blue" id="admin-current-formula">없음</span>
                         </div>
                         <div class="state-item">
                             <span class="label">선점자</span>
-                            <span class="value text-pink" id="admin-current-claimant">없음</span>
+                            <span class="value cartoon-text-pink" id="admin-current-claimant">없음</span>
                         </div>
                     </div>
                 </section>
@@ -148,11 +148,11 @@
                     <span class="player-badge-name" id="game-my-name">PLAYER</span>
                     <div class="score-display">
                         <span class="label">SCORE</span>
-                        <span class="value font-orbit text-cyan" id="game-my-score">0000</span>
+                        <span class="value font-orbit cartoon-text-blue" id="game-my-score">0000</span>
                     </div>
                     <div class="bingo-lines-display">
                         <span class="label">BINGO</span>
-                        <span class="value font-orbit text-pink" id="game-my-bingos">0</span>
+                        <span class="value font-orbit cartoon-text-pink" id="game-my-bingos">0</span>
                     </div>
                 </div>
 
@@ -168,7 +168,7 @@
             <main class="game-workspace">
                 <!-- 좌측 영역: 카드 뷰 및 타이머 -->
                 <section class="workspace-left">
-                    <div class="card-screen neon-border-cyan" id="game-card-screen">
+                    <div class="card-screen" id="game-card-screen">
                         
                         <!-- 10초 배치 카운트다운 오버레이 -->
                         <div id="placement-timer-overlay" class="placement-overlay">
@@ -212,14 +212,14 @@
 
                         <!-- 중앙 스크린 하단 선점 액션 영역 -->
                         <div class="card-action-bar">
-                            <button id="btn-claim-card" class="btn btn-pink btn-large neon-glow-pink">카드 선점하기</button>
+                            <button id="btn-claim-card" class="btn btn-large">카드 선점하기</button>
                         </div>
                     </div>
 
                     <!-- 60초 타이머 원형/바 UI -->
                     <div class="timer-section">
                         <div class="timer-bar-container">
-                            <div class="timer-bar neon-bg-pink" id="timer-bar" style="width: 100%"></div>
+                            <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
                         </div>
                         <div class="timer-text font-orbit">
                             TIME LEFT: <span id="timer-seconds">60</span>s
@@ -268,7 +268,7 @@
         <!-- 4. 게임 결과 모달 -->
         <div id="modal-game-result" class="modal">
             <div class="modal-content result-modal-content">
-                <h2 class="neon-text-pink font-orbit" style="text-align: center; font-size: 2.2rem; letter-spacing: 2px;">GAME OVER</h2>
+                <h2 class="cartoon-text-pink font-orbit" style="text-align: center; font-size: 2.2rem; letter-spacing: 2px;">GAME OVER</h2>
                 <div class="winner-display">
                     <span class="winner-title">WINNER</span>
                     <span class="winner-name font-orbit winner-highlight" id="result-winner-name">-</span>

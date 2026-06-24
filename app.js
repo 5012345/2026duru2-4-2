@@ -195,35 +195,31 @@ const CanvasFX = {
     },
 
     createExplosion(x, y, color = "#ff007f") {
-        const count = 40;
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 8 + 4;
-            this.particles.push({
-                x,
-                y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                radius: Math.random() * 3 + 2,
-                color,
-                alpha: 1,
-                decay: Math.random() * 0.02 + 0.015,
-                gravity: 0.1
-            });
-        }
+        // 기존 캔버스 파티클 대신 HTML/CSS 기반의 3D 만화 폭발 이펙트 트리거
+        this.triggerCartoonBoom(x, y);
+    },
+
+    triggerCartoonBoom(x, y) {
+        const el = document.createElement("div");
+        el.className = "effect-boom-element";
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        document.body.appendChild(el);
+        setTimeout(() => {
+            el.remove();
+        }, 600);
     },
 
     createBingoCelebration() {
-        const colors = ["#ff007f", "#00f0ff", "#39ff14", "#fff000"];
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
 
-        for (let burst = 0; burst < 3; burst++) {
+        // 빙고 잭팟 시 화면 곳곳에 다발성 만화 폭발 이펙트 발생
+        for (let burst = 0; burst < 5; burst++) {
             setTimeout(() => {
-                const x = screenWidth * (0.25 + Math.random() * 0.5);
-                const y = screenHeight * (0.25 + Math.random() * 0.5);
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                this.createExplosion(x, y, color);
+                const x = screenWidth * (0.2 + Math.random() * 0.6);
+                const y = screenHeight * (0.2 + Math.random() * 0.6);
+                this.triggerCartoonBoom(x, y);
             }, burst * 200);
         }
     },
@@ -557,7 +553,7 @@ class VirtualMultiplayerEngine {
 let graphRenderer = null;
 
 function initUI() {
-    graphRenderer = new NeonGraphRenderer("current-graph-container");
+    graphRenderer = new CartoonGraphRenderer("current-graph-container");
     CanvasFX.init();
 
     const cells = document.querySelectorAll(".board-cell");
@@ -750,7 +746,7 @@ function renderActiveCard() {
     const statusBadge = document.getElementById("card-status-badge");
     const claimBtn = document.getElementById("btn-claim-card");
 
-    screen.className = "card-screen neon-border-cyan";
+    screen.className = "card-screen";
     
     if (!isMyPlacementTurn) {
         document.getElementById("placement-timer-overlay").classList.remove("active");
