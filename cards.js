@@ -180,7 +180,7 @@ function generateDynamicDeck(playerCount) {
     const deck = [];
 
     let iterations = 0;
-    while (deck.length < requiredCardsCount && iterations < 20000) {
+    while (deck.length < requiredCardsCount && iterations < 30000) {
         iterations++;
         // 50% 확률로 표준형(y=ax+b) 또는 일반형(ax+by+c=0) 선택
         const isStandard = Math.random() < 0.5;
@@ -191,6 +191,9 @@ function generateDynamicDeck(playerCount) {
             const b = Math.floor(Math.random() * 21) - 10;
 
             if (a === 0) continue; // 일차함수
+
+            // [조건] x절편(-b/a)이 정수여야 하므로 b는 a의 배수여야 함
+            if (b % a !== 0) continue;
 
             const x_int = -b / a;
             
@@ -213,7 +216,7 @@ function generateDynamicDeck(playerCount) {
                     formula: formula,
                     a: a,
                     b: b,
-                    x_int: Number(x_int.toFixed(2))
+                    x_int: x_int
                 });
             }
         } else {
@@ -224,13 +227,9 @@ function generateDynamicDeck(playerCount) {
 
             if (a === 0 || b === 0) continue; // 일차함수
 
-            // 2개 이상 정수 조건 검사 (기울기: -a/b, y절편: -c/b, x절편: -c/a)
-            let integerPropsCount = 0;
-            if (a % b === 0) integerPropsCount++;
-            if (c % b === 0) integerPropsCount++;
-            if (c % a === 0) integerPropsCount++;
-
-            if (integerPropsCount < 2) continue;
+            // [조건] 기울기(-a/b), y절편(-c/b), x절편(-c/a) 모두 정수여야 함
+            // 즉, a는 b의 배수이고, c는 a의 배수여야 함 (c가 a의 배수이면 c는 b의 배수도 충족됨)
+            if (a % b !== 0 || c % a !== 0) continue;
 
             const slope = -a / b;
             const y_int = -c / b;
@@ -259,9 +258,9 @@ function generateDynamicDeck(playerCount) {
                 deck.push({
                     id: `card_${deck.length + 1}`,
                     formula: formula,
-                    a: Number(slope.toFixed(2)),
-                    b: Number(y_int.toFixed(2)),
-                    x_int: Number(x_int.toFixed(2))
+                    a: slope,
+                    b: y_int,
+                    x_int: x_int
                 });
             }
         }
